@@ -32,21 +32,25 @@ class RadialTree:
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     """
     spread = 0.0;
-    fnt_large = ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 14)
-    fnt_small = ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 10)
-    tip_border= 50
-    image_border=10
-    point_radius=3
+    fnt_large = ImageFont.truetype('/Library/Fonts/Microsoft/Calibril.ttf', 35)
+    fnt_small = ImageFont.truetype('/Library/Fonts/Microsoft/Calibril.ttf', 25)
+    #fnt_large = ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 14)
+    #fnt_small = ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 10)
+
+    tip_border= 100
+    image_border=20
+    point_radius=4
 
     def render_png(self,tree, width, height, out_file):
-        image = Image.new('RGBA', (width,height), (255,255,255,255))
+        image = Image.new('RGBA', (width*2,height*2), (255,255,255,255))
         d = ImageDraw.Draw(image)
         cache = Cache()
         root = tree.node(tree.root)
-        hasBranchLengths = tree.sum_branchlength(tree.root,tree.root) > 0
-        #print hasBranchLengths
+        hasBranchLengths = self.total_branchlength(tree)
+        print str(hasBranchLengths)+" "+str(self.total_branchlength(tree))
         self.constructNode(tree, root, 0.0, math.pi * 2, 0.0, 0.0, 0.0,hasBranchLengths, cache)
-        self.drawTree(cache,d,width,height)
+        self.drawTree(cache,d,width*2,height*2)
+        image = image.resize((width,height), Image.ANTIALIAS)
         image.save(out_file, "PNG")
 
     def taxNumber(self,tree,node):
@@ -220,3 +224,11 @@ class RadialTree:
         #     ymin = min(ymin,line.y1(),line.y2())
         return -ymin+self.tip_border+self.image_border
 
+
+    def total_branchlength(self, tree, node=None):
+        if node == None:
+            node = tree.node(tree.root)
+        sumbr=node.data.branchlength
+        for n in node.succ:
+            sumbr+=self.total_branchlength(tree,tree.node(n))
+        return sumbr
