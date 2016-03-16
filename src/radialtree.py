@@ -1,6 +1,7 @@
 from Bio import Nexus
 from Bio import Phylo
 from PIL import Image, ImageDraw, ImageChops, ImageFont
+import cairocffi as cairo
 import numpy
 import math
 from Point import Point
@@ -32,10 +33,10 @@ class RadialTree:
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     """
     spread = 0.0;
-    fnt_large = ImageFont.truetype('/Library/Fonts/Microsoft/Calibril.ttf', 35)
-    fnt_small = ImageFont.truetype('/Library/Fonts/Microsoft/Calibril.ttf', 25)
-    #fnt_large = ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 14)
-    #fnt_small = ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 10)
+    #fnt_large = ImageFont.truetype('/Library/Fonts/Microsoft/Calibril.ttf', 35)
+    #fnt_small = ImageFont.truetype('/Library/Fonts/Microsoft/Calibril.ttf', 25)
+    fnt_large = ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 14)
+    fnt_small = ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 10)
 
     tip_border= 100
     image_border=20
