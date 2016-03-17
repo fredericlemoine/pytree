@@ -13,7 +13,7 @@ def read_tree(infile):
     return(treestr)
 
 def usage():
-    return 'unrooted.py -i <inputfile> -o <outputfile> -t <pdf|png> [-W <width: default 800> -H <height: default 800>]'
+    return sys.argv[0]+' -i <inputfile> -o <outputfile> -t <pdf|png> [-W <width: default 800> -H <height: default 800>]'
 
 def main(argv):
     goodtypes= ('pdf','png')
