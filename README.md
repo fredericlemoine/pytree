@@ -56,3 +56,15 @@ conda install -c https://conda.anaconda.org/vgauthier py2cairo
 ```
 unrooted.py -i <inputfile> -o <outputfile> -t <pdf|png> [-W <width: default 800> -H <height: default 800>]'
 ```
+
+# Example
+
+```[bash]
+cat > t.nw 
+((2:1,3:1):1,(4:1,5:1):1,(0:1,1:1):1);
+
+./unrooted.py -i t.nw -o t.png -t png -W 200 -H 200
+```
+
+This gives the following tree:
+![Example tree](doc/t.png)
