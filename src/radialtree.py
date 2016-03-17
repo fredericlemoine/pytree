@@ -1,14 +1,20 @@
 from Bio import Nexus
 from Bio import Phylo
-from PIL import Image, ImageDraw, ImageChops, ImageFont
-import cairocffi as cairo
-import numpy
+#from PIL import Image, ImageDraw, ImageChops, ImageFont
+#import numpy
 import math
 from Point import Point
 from Line import Line
 from Cache import Cache
 import copy
 import re
+
+try:
+    import cairocffi as cairo
+except:
+    print "cairocffi not present, trying loading cairo"
+    import cairo
+
 
 class RadialTree:
     """
