@@ -35,24 +35,40 @@ class RadialTree:
     spread = 0.0;
     #fnt_large = ImageFont.truetype('/Library/Fonts/Microsoft/Calibril.ttf', 35)
     #fnt_small = ImageFont.truetype('/Library/Fonts/Microsoft/Calibril.ttf', 25)
-    fnt_large = ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 14)
-    fnt_small = ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 10)
+    fnt_large = 14 #ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 14)
+    fnt_small = 10 #ImageFont.truetype('Pillow/Tests/fonts/DejaVuSans.ttf', 10)
 
-    tip_border= 100
-    image_border=20
+    tip_border= 20
+    tip_distance=10
+    image_border=0
     point_radius=4
 
     def render_png(self,tree, width, height, out_file):
-        image = Image.new('RGBA', (width*2,height*2), (255,255,255,255))
-        d = ImageDraw.Draw(image)
+        #image = Image.new('RGBA', (width*2,height*2), (255,255,255,255))
+        image = cairo.ImageSurface (cairo.FORMAT_ARGB32, width,height)
+        d = cairo.Context (image)
+        #d.scale (width, height) # Normalizing the canvas
+        #d = ImageDraw.Draw(image)
         cache = Cache()
         root = tree.node(tree.root)
         hasBranchLengths = self.total_branchlength(tree)
         print str(hasBranchLengths)+" "+str(self.total_branchlength(tree))
         self.constructNode(tree, root, 0.0, math.pi * 2, 0.0, 0.0, 0.0,hasBranchLengths, cache)
-        self.drawTree(cache,d,width*2,height*2)
-        image = image.resize((width,height), Image.ANTIALIAS)
-        image.save(out_file, "PNG")
+        self.drawTree(cache,d,width,height)
+        #image = image.resize((width,height), Image.ANTIALIAS)
+        #image.save(out_file, "PNG")
+        d.stroke ()
+        image.write_to_png (out_file) # Output to PNG
+
+    def render_pdf(self,tree, width, height, out_file):
+        image = cairo.PDFSurface(out_file,width,height)
+        d = cairo.Context (image)
+        cache = Cache()
+        root = tree.node(tree.root)
+        hasBranchLengths = self.total_branchlength(tree)
+        self.constructNode(tree, root, 0.0, math.pi * 2, 0.0, 0.0, 0.0,hasBranchLengths, cache)
+        self.drawTree(cache,d,width,height)
+        d.stroke ()
 
     def taxNumber(self,tree,node):
         num = 0
@@ -123,7 +139,6 @@ class RadialTree:
             nodeLabelPath = Line(nodePoint, nodeLabelPoint)
             cache.nodeLabelPaths[node] = nodeLabelPath
         else:
-
             taxonPoint = Point(xPosition + ((length + 1.0) * directionX),
                                yPosition + ((length + 1.0) * directionY))
 
@@ -141,23 +156,39 @@ class RadialTree:
 
     def drawTree(self,cache,image_draw,width, height):
         xscale=self.xscale(cache,width)
-        xoffset=self.xoffset(cache,width,xscale)
         yscale=self.yscale(cache,height)
-        yoffset=self.yoffset(cache,height,yscale)
-        
+        scale = min(xscale,yscale)
+        xoffset=self.xoffset(cache,width,scale)
+        yoffset=self.yoffset(cache,height,scale)
+
         for line in cache.branchPaths.values():
-            image_draw.line([(line.x1()*xscale+xoffset,line.y1()*yscale+yoffset),(line.x2()*xscale+xoffset,line.y2()*yscale+yoffset)],(0,0,0,255),2)
+            image_draw.set_source_rgb (0, 0, 0) # Solid color
+            image_draw.set_line_width (2)
+            image_draw.move_to(line.x1()*scale+xoffset,line.y1()*scale+yoffset);
+            image_draw.line_to(line.x2()*scale+xoffset,line.y2()*scale+yoffset);
+
+            #image_draw.line([(line.x1()*xscale+xoffset,line.y1()*yscale+yoffset),(line.x2()*xscale+xoffset,line.y2()*yscale+yoffset)],(0,0,0,255),2)
             
         for node,line in cache.tipLabelPaths.iteritems():
-            tw,th = image_draw.textsize(node.data.taxon, font=self.fnt_small)
-            image_draw.text([line.x1()*xscale+xoffset-tw/2,line.y1()*yscale+yoffset-th/2], node.data.taxon, (0,0,0,255), font=self.fnt_large)
+            # Knowing the line from the taxon tip : we find the point in the same direction, at distance 15
+            point3 = self.label_coordinates(line.point1,line.point2,self.tip_distance,scale,xoffset,yoffset)
+            image_draw.set_source_rgb (0.0, 0.0, 0.0)
+            image_draw.select_font_face ("sans-serif")#,cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+            image_draw.set_font_size(self.fnt_large)
+            x_bearing, y_bearing, w, h = image_draw.text_extents(node.data.taxon)[:4]
+            
+            image_draw.move_to (point3.x - w / 2 - x_bearing,
+                                point3.y - h / 2 - y_bearing)
+            image_draw.show_text (node.data.taxon)
+            #tw,th = image_draw.textsize(node.data.taxon, font=self.fnt_small)
+            #image_draw.text([line.x1()*xscale+xoffset-tw/2,line.y1()*yscale+yoffset-th/2], node.data.taxon, (0,0,0,255), font=self.fnt_large)
 
-        for node,line in cache.nodeLabelPaths.iteritems():
-            image_draw.ellipse([line.x1()*xscale+xoffset-self.point_radius,
-                                line.y1()*yscale+yoffset-self.point_radius,
-                                line.x1()*xscale+xoffset+self.point_radius,
-                                line.y1()*yscale+yoffset+self.point_radius],
-                               fill=(0,0,0,255))
+        # for node,line in cache.nodeLabelPaths.iteritems():
+        #     image_draw.ellipse([line.x1()*xscale+xoffset-self.point_radius,
+        #                         line.y1()*yscale+yoffset-self.point_radius,
+        #                         line.x1()*xscale+xoffset+self.point_radius,
+        #                         line.y1()*yscale+yoffset+self.point_radius],
+        #                        fill=(0,0,0,255))
             
 
         # for line in cache.nodeLabelPaths.values() :
@@ -233,3 +264,15 @@ class RadialTree:
         for n in node.succ:
             sumbr+=self.total_branchlength(tree,tree.node(n))
         return sumbr
+
+    "Returns the point in the plane, at distance d from point 1, in the direction of point 2" 
+    def label_coordinates(self,p1, p2, d,scale,xoffset,yoffset):
+        x1 = p1.x*scale+xoffset
+        y1 = p1.y*scale+yoffset
+        x2 = p2.x*scale+xoffset
+        y2 = p2.y*scale+yoffset
+        lengthp1p2 = math.sqrt(math.pow(x2 - x1,2) + math.pow(y2-y1,2))
+        print(lengthp1p2)
+        out_x = d * 1.0 * (x2 - x1) / lengthp1p2 + x1
+        out_y = d * 1.0 * (y2 - y1) / lengthp1p2 + y1
+        return(Point(out_x,out_y))
