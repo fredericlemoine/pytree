@@ -66,7 +66,7 @@ def main(argv):
         sys.exit(2)
 
     treestr = read_tree(inputfile)
-    treeIO = Nexus.Nexus.Nexus("#NEXUS\nBegin trees;\ntree 1 = "+treestr+"\nEnd;")
+    treeIO = Nexus.Nexus.Nexus("#NEXUS\nBegin trees;\ntree 1 = "+treestr+";\nEnd;")
     radialTree = RadialTree()
     if(otype == "pdf"):
         radialTree.render_pdf(treeIO.trees[0],width,height,outputfile)
